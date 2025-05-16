@@ -1,8 +1,6 @@
 name: GitHub Release Monitor
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
   workflow_dispatch:  # Allow manual runs
 
 jobs:
@@ -32,6 +30,7 @@ jobs:
         run: |
           mkdir -p ~/.gmail-mcp
           echo "${{ secrets.GMAIL_AUTH }}" > ~/.gmail-mcp/credentials.json
+          echo "${{ secrets.GCP_OAUTH }}" > ~/.gmail-mcp/gcp-oauth.keys.json
           
       - name: Run release monitor
         env:
