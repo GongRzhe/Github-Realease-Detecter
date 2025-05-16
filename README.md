@@ -1,8 +1,20 @@
-# GitHub Release Detector
+![image](https://github.com/user-attachments/assets/80ee59e2-4b37-4c05-b9f7-2e72348ff69e)# GitHub Release Detector
 
 A tool that automatically monitors GitHub repositories for new releases and sends email notifications when they're detected. Stay up-to-date with your favorite open source projects without constantly checking for updates.
 
 ![GitHub Release Detector](https://img.shields.io/badge/status-active-brightgreen)
+![MCP](https://img.shields.io/badge/MCP-enabled-blue)
+![AutoGen](https://img.shields.io/badge/AutoGen-compatible-orange)
+![GitHub](https://img.shields.io/badge/GitHub-API-181717?logo=github)
+![Agent](https://img.shields.io/badge/Agent-powered-yellow)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-workflow-2088FF?logo=github-actions)
+
+## Overview
+
+GitHub Release Detector is an agent-based monitoring system that leverages the Model Context Protocol (MCP) architecture to create an autonomous pipeline for tracking and notifying users of open-source software releases. The system implements a multi-layered service architecture connecting GitHub's REST API with Gmail's SMTP services through OAuth2 authentication.
+
+![image](https://github.com/user-attachments/assets/9724028f-bb01-4e0d-b2a4-6003ac2f5c39)
+
 
 ## Features
 
@@ -77,9 +89,7 @@ Create a configuration file or use environment variables:
 
 ```bash
 # Example .env file
-REPOS_TO_MONITOR=facebook/react,vuejs/vue,tensorflow/tensorflow
-CHECK_INTERVAL=60  # minutes
-RECIPIENT_EMAIL=your.email@example.com
+OPENAI_API_KEY=sk-XXX
 ```
 
 ## Usage
