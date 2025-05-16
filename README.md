@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/80ee59e2-4b37-4c05-b9f7-2e72348ff69e)# GitHub Release Detector
+# GitHub Release Detector
 
 A tool that automatically monitors GitHub repositories for new releases and sends email notifications when they're detected. Stay up-to-date with your favorite open source projects without constantly checking for updates.
 
