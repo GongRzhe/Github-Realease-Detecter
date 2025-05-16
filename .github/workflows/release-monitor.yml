@@ -30,12 +30,7 @@ jobs:
         run: |
           mkdir -p ~/.gmail-mcp
           echo "${{ secrets.GMAIL_AUTH }}" > ~/.gmail-mcp/credentials.json
-          node -e "const fs=require('fs'); fs.writeFileSync(
-            '~/.gmail-mcp/gcp-oauth.keys.json', 
-            process.env.GCP_OAUTH
-          )" 
-        env:
-          GCP_OAUTH: ${{ secrets.GCP_OAUTH }}
+          echo "${{ secrets.GCP_OAUTH_B64 }}" | base64 -d > ~/.gmail-mcp/gcp-oauth.keys.json
           
       - name: Run release monitor
         env:
