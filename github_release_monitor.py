@@ -68,21 +68,40 @@ class GitHubReleaseAgent(RoutedAgent):
     
     def _load_history(self) -> ReleaseHistory:
         """Load release history from file or create new if not exists."""
-        if os.path.exists(self.history_file):
+        # Resolve absolute path for history file
+        history_file_path = os.path.abspath(self.history_file)
+        print(f"Loading release history from: {history_file_path}")
+        
+        if os.path.exists(history_file_path):
             try:
-                with open(self.history_file, 'r') as f:
+                with open(history_file_path, 'r') as f:
                     data = json.load(f)
-                return ReleaseHistory(**data)
+                history = ReleaseHistory(**data)
+                print(f"Loaded history with {len(history.repositories)} repositories")
+                for repo in history.repositories:
+                    print(f"  - {repo.owner}/{repo.repo}: {len(repo.releases)} releases")
+                return history
             except Exception as e:
                 print(f"Error loading history: {e}")
                 return ReleaseHistory()
-        return ReleaseHistory()
+        else:
+            print(f"History file not found. Starting with empty history.")
+            return ReleaseHistory()
     
     def _save_history(self):
         """Save release history to file."""
-        with open(self.history_file, 'w') as f:
+        # Resolve absolute path for history file
+        history_file_path = os.path.abspath(self.history_file)
+        print(f"Saving release history to: {history_file_path}")
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(history_file_path), exist_ok=True)
+        
+        with open(history_file_path, 'w') as f:
             # Use the custom encoder to handle datetime objects
             json.dump(self.history.model_dump(), f, indent=2, cls=DateTimeEncoder)
+        
+        print(f"Saved history with {len(self.history.repositories)} repositories")
     
     def _get_repo_index(self, owner: str, repo: str) -> int:
         """Get index of repository in history or -1 if not found."""
@@ -133,10 +152,12 @@ class GitHubReleaseAgent(RoutedAgent):
         
         # Extract IDs of known releases
         known_release_ids = [release.id for release in self.history.repositories[repo_index].releases]
+        print(f"Repository {owner}/{repo} has {len(known_release_ids)} known releases")
         
         new_releases = []
         for release_data in releases_data:
             if release_data['id'] not in known_release_ids:
+                print(f"Found new release: {release_data['name'] or release_data['tag_name']} (ID: {release_data['id']})")
                 release = Release(
                     id=release_data['id'],
                     tag_name=release_data['tag_name'],
@@ -147,6 +168,8 @@ class GitHubReleaseAgent(RoutedAgent):
                 )
                 new_releases.append((owner, repo, release))
                 self.history.repositories[repo_index].releases.append(release)
+            else:
+                print(f"Skipping known release: {release_data['name'] or release_data['tag_name']} (ID: {release_data['id']})")
         
         if new_releases:
             self._save_history()
@@ -330,12 +353,37 @@ class ReleaseMonitorOrchestrator:
             args=["@gongrzhe/server-gmail-autoauth-mcp"]
         )
     
+    async def initialize(self):
+        """
+        Initialize by loading all repositories and their current releases.
+        This creates the initial history without sending notifications.
+        """
+        print(f"\n[{datetime.now()}] Initializing release monitor...")
+        print(f"Loading current releases for {len(self.repositories)} repositories")
+        
+        # Check all repositories to build up the initial history
+        init_releases = await self.github_agent.check_all_repositories(self.repositories)
+        
+        if init_releases:
+            print(f"Found {len(init_releases)} existing release(s) during initialization")
+            print("These releases have been added to history and will NOT trigger notifications")
+        else:
+            print("No existing releases found during initialization")
+        
+        # Save the history to ensure all current releases are recorded
+        self.github_agent._save_history()
+        
+        print("Initialization complete - only new releases will trigger notifications")
+    
     async def start_monitoring(self):
         """Start monitoring for new releases across all repositories."""
         repo_list = ", ".join([f"{owner}/{repo}" for owner, repo in self.repositories])
         print(f"Starting to monitor {len(self.repositories)} repositories: {repo_list}")
         print(f"Checking every {self.check_interval} seconds")
         print(f"Email notifications will be sent to: {self.recipient_email}")
+        
+        # Initialize first to load existing releases
+        await self.initialize()
         
         # Start the workbench in a context manager
         async with McpWorkbench(self.gmail_mcp_server) as workbench:
